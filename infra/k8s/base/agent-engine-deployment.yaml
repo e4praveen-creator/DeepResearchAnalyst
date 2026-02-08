@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: milky-way-agent-engine
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: milky-way-agent-engine
+  template:
+    metadata:
+      labels:
+        app: milky-way-agent-engine
+    spec:
+      containers:
+        - name: agent-engine
+          image: milky-way/agent-engine:latest
+          ports:
+            - containerPort: 9000
+          env:
+            - name: METADATA_DB_URL
+              value: "postgres://milky_way:password@milky-way-metadata-db:5432/milky_way"
+            - name: REDIS_URL
+              value: "redis://milky-way-cache:6379"
+            - name: VECTOR_STORE_URL
+              value: "http://milky-way-vector-store:8080"
+            - name: LLM_PROVIDER
+              value: "managed-api"
+          resources:
+            requests:
+              cpu: "2"
+              memory: "8Gi"
+            limits:
+              cpu: "4"
+              memory: "16Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: milky-way-agent-engine
+spec:
+  selector:
+    app: milky-way-agent-engine
+  ports:
+    - port: 9000
+      targetPort: 9000
+  type: ClusterIP

@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: milky-way-vector-store
+spec:
+  serviceName: milky-way-vector-store
+  replicas: 1
+  selector:
+    matchLabels:
+      app: milky-way-vector-store
+  template:
+    metadata:
+      labels:
+        app: milky-way-vector-store
+    spec:
+      containers:
+        - name: vector-store
+          image: milky-way/vector-store:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: VECTOR_DIMENSIONS
+              value: "1536"
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/vector-store
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 100Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: milky-way-vector-store
+spec:
+  selector:
+    app: milky-way-vector-store
+  ports:
+    - port: 8080
+      targetPort: 8080
+  clusterIP: None

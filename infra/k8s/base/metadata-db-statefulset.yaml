@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: milky-way-metadata-db
+spec:
+  serviceName: milky-way-metadata-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app: milky-way-metadata-db
+  template:
+    metadata:
+      labels:
+        app: milky-way-metadata-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: milky_way
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: milky-way-secrets
+                  key: postgres_password
+            - name: POSTGRES_DB
+              value: milky_way
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 50Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: milky-way-metadata-db
+spec:
+  selector:
+    app: milky-way-metadata-db
+  ports:
+    - port: 5432
+      targetPort: 5432
+  clusterIP: None

@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: milky-way-worker-pool
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: milky-way-worker-pool
+  template:
+    metadata:
+      labels:
+        app: milky-way-worker-pool
+    spec:
+      containers:
+        - name: worker-pool
+          image: milky-way/worker-pool:latest
+          ports:
+            - containerPort: 9100
+          env:
+            - name: DATABRICKS_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: milky-way-secrets
+                  key: databricks_host
+            - name: DATABRICKS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: milky-way-secrets
+                  key: databricks_token
+            - name: JOB_QUEUE_URL
+              value: "redis://milky-way-cache:6379/1"
+          resources:
+            requests:
+              cpu: "1"
+              memory: "4Gi"
+            limits:
+              cpu: "2"
+              memory: "8Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: milky-way-worker-pool
+spec:
+  selector:
+    app: milky-way-worker-pool
+  ports:
+    - port: 9100
+      targetPort: 9100
+  type: ClusterIP
