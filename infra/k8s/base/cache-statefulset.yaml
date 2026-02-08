@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: milky-way-cache
+spec:
+  serviceName: milky-way-cache
+  replicas: 3
+  selector:
+    matchLabels:
+      app: milky-way-cache
+  template:
+    metadata:
+      labels:
+        app: milky-way-cache
+    spec:
+      containers:
+        - name: redis
+          image: redis:7
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - name: data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: milky-way-cache
+spec:
+  selector:
+    app: milky-way-cache
+  ports:
+    - port: 6379
+      targetPort: 6379
+  clusterIP: None

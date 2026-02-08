@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: milky-way-api-gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: milky-way-api-gateway
+  template:
+    metadata:
+      labels:
+        app: milky-way-api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: milky-way/api-gateway:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: OIDC_ISSUER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: milky-way-secrets
+                  key: oidc_issuer_url
+            - name: REDIS_URL
+              value: "redis://milky-way-cache:6379"
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "1"
+              memory: "2Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: milky-way-api-gateway
+spec:
+  selector:
+    app: milky-way-api-gateway
+  ports:
+    - port: 80
+      targetPort: 8000
+  type: ClusterIP

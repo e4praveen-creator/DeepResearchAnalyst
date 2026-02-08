@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: milky-way-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: milky-way-frontend
+  template:
+    metadata:
+      labels:
+        app: milky-way-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: milky-way/frontend:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: API_BASE_URL
+              value: "https://api.milky-way.local"
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: milky-way-frontend
+spec:
+  selector:
+    app: milky-way-frontend
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP
